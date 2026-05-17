@@ -17,10 +17,12 @@ from ai.minimax import MinimaxAgent
 
 def main():
     # ── 1. KHỞI TẠO ──────────────────────────────────────────
-    board      = Board()
-    logic      = GameLogic()
-    ui         = PygameUI()
-    evaluator  = Evaluator()
+    board      = Board()       # Quản lý dữ liệu bàn cờ
+    logic      = GameLogic()   # Xử lý luật chơi
+    ui         = PygameUI()    # Giao diện pygame
+    evaluator  = Evaluator()   # Bộ đánh giá điểm số
+
+    # Khởi tạo AI với độ sâu bằng 3
     ai_agent   = MinimaxAgent(depth=3, evaluator=evaluator)
     clock      = pygame.time.Clock()
 
