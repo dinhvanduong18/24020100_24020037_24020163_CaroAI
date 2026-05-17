@@ -97,11 +97,8 @@ class MinimaxAgent:
             max_eval = -float('inf')
             for r, c in moves:
                 board.make_move(r, c, self.MACHINE)
-                attack_score = self.evaluator.evaluate_local(board.grid, r, c)
                 
-                move_score = attack_score - defense_score
-                
-                eval_score = self._minimax_rec(board, depth - 1, False, current_score + move_score, r, c, game_logic, alpha, beta)
+                eval_score = self._minimax_rec(board, depth - 1, False, current_score, r, c, game_logic, alpha, beta)
                 board.undo_move(r, c)
                 max_eval = max(max_eval, eval_score)
                 alpha = max(alpha, eval_score)
@@ -113,11 +110,8 @@ class MinimaxAgent:
             min_eval = float('inf')
             for r, c in moves:
                 board.make_move(r, c, self.PLAYER)
-                attack_score = self.evaluator.evaluate_local(board.grid, r, c)
                 
-                move_score = attack_score - defense_score
-                
-                eval_score = self._minimax_rec(board, depth - 1, True, current_score + move_score, r, c, game_logic, alpha, beta)
+                eval_score = self._minimax_rec(board, depth - 1, True, current_score, r, c, game_logic, alpha, beta)
                 board.undo_move(r, c)
                 min_eval = min(min_eval, eval_score)
                 beta = min(beta, eval_score)
