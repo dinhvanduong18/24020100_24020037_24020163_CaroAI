@@ -95,29 +95,45 @@ class Evaluator:
             axis_score = 0
             
             # Áp dụng BẢNG ĐIỂM CHUẨN (Heuristic Scoring)
-            if total_count >= 4:
-                # Nhóm 4 quân: Thắng luôn, không quan tâm bị chặn hay không
-                axis_score = 100000 if player == self.MACHINE else -100000
+            if total_count >= 5:
+                # 5 quân: Thắng chắc chắn
+                axis_score = 2000000 if player == self.MACHINE else -2000000
                 
             elif total_blocks == 2:
-                # Nhóm Chết: Bị chặn 2 đầu thì 0 điểm (dù 2 hay 3 quân)
+                # Nhóm Chết: Bị chặn 2 đầu thì 0 điểm (dù 2, 3 hay 4 quân)
                 axis_score = 0
                 
+            elif total_count == 4:
+                # Nhóm 4 quân
+                if total_blocks == 0:
+                    # Mở 2 đầu (chắc chắn thắng)
+                    axis_score = 1000000 if player == self.MACHINE else -1000000
+                elif total_blocks == 1:
+                    # Chặn 1 đầu (bắt buộc phải chặn đầu còn lại)
+                    axis_score = 150000 if player == self.MACHINE else -150000
+                    
             elif total_count == 3:
                 # Nhóm 3 quân
                 if total_blocks == 0:
-                    # Mở 2 đầu (Chặn 0)
-                    axis_score = 50000 if player == self.MACHINE else -50000
+                    # Mở 2 đầu (Cực kỳ nguy hiểm, tương đương 4 quân chặn 1 đầu)
+                    axis_score = 500000 if player == self.MACHINE else -500000
                 elif total_blocks == 1:
-                    # Bị chặn 1 đầu (Chặn 1)
-                    axis_score = 1000 if player == self.MACHINE else -5000
+                    # Bị chặn 1 đầu
+                    axis_score = 10000 if player == self.MACHINE else -10000
                     
             elif total_count == 2:
                 # Nhóm 2 quân
                 if total_blocks == 0:
-                    # Mở 2 đầu (Chặn 0)
+                    # Mở 2 đầu
+                    axis_score = 5000 if player == self.MACHINE else -5000
+                elif total_blocks == 1:
+                    # Chặn 1 đầu
                     axis_score = 100 if player == self.MACHINE else -100
-                # Chặn 1 đầu thì được 0 điểm do luật không quy định khác
+                    
+            elif total_count == 1:
+                # 1 quân
+                if total_blocks == 0:
+                    axis_score = 10 if player == self.MACHINE else -10
             
             # Cộng dồn điểm của trục này vào tổng điểm chung
             total_score += axis_score

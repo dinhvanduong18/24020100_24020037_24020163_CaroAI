@@ -80,7 +80,12 @@ class Board:
                         if self.grid[nr][nc] == EMPTY:
                             empty_cells.add((nr, nc))
                             
-        return list(empty_cells)
+        empty_list = list(empty_cells)
+        # Sắp xếp danh sách ưu tiên các ô gần trung tâm bàn cờ để AI đánh ổn định hơn (tránh chọn ngẫu nhiên các nước cùng điểm)
+        center = self.size // 2
+        empty_list.sort(key=lambda cell: abs(cell[0] - center) + abs(cell[1] - center))
+        
+        return empty_list
 
     def undo_move(self, row: int, col: int):
         """
