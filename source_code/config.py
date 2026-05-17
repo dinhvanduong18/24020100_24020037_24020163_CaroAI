@@ -13,9 +13,10 @@ WIN_COUNT = 4           # Số quân liên tiếp để thắng
 CELL_SIZE     = 60                              # Kích thước mỗi ô (pixel)
 MARGIN        = 40                              # Khoảng cách lề xung quanh bàn cờ
 STATUS_HEIGHT = 60                              # Chiều cao thanh trạng thái phía trên
+PANEL_WIDTH   = 280                             # Chiều rộng bảng điều khiển bên phải
 
-WINDOW_WIDTH  = CELL_SIZE * BOARD_SIZE + MARGIN * 2          # Chiều rộng cửa sổ
-WINDOW_HEIGHT = CELL_SIZE * BOARD_SIZE + MARGIN * 2 + STATUS_HEIGHT  # Chiều cao cửa sổ
+WINDOW_WIDTH  = CELL_SIZE * BOARD_SIZE + MARGIN * 2 + PANEL_WIDTH
+WINDOW_HEIGHT = CELL_SIZE * BOARD_SIZE + MARGIN * 2 + STATUS_HEIGHT
 
 FPS = 30  # Số khung hình mỗi giây
 
@@ -31,5 +32,15 @@ COLOR_STATUS_TXT = (255, 255, 200)   # Màu chữ trạng thái (vàng nhạt)
 COLOR_WIN_LINE   = (255, 215,   0)   # Màu vạch thắng (vàng)
 COLOR_HOVER      = (180, 220, 140)   # Màu highlight ô đang trỏ chuột
 
+# --- Màu Nút Bấm ---
+COLOR_BTN_BG     = (70, 130, 180)    # Màu nền nút
+COLOR_BTN_HOVER  = (100, 149, 237)   # Màu nền nút khi hover
+COLOR_BTN_TEXT   = (255, 255, 255)   # Màu chữ nút
+COLOR_PANEL_BG   = (230, 210, 170)   # Màu nền panel
+
+# --- Chế độ chơi ---
+MODE_PVE = 0
+MODE_PVP = 1
+
 # --- Tên cửa sổ ---
-WINDOW_TITLE = "Game Caro 9x9 - 2 Người Chơi"
+WINDOW_TITLE = "Game Caro 9x9"
