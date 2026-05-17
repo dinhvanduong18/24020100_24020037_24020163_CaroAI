@@ -4,7 +4,7 @@ import math
 class MinimaxAgent:
     """
     Class AI sử dụng thuật toán Minimax tích lũy điểm dọc theo các nhánh tìm kiếm.
-    Cấu trúc không cắt tỉa Alpha-Beta.
+    Cấu trúc có áp dụng cắt tỉa Alpha-Beta để tối ưu.
     """
 
     def __init__(self, depth, evaluator):
@@ -26,13 +26,16 @@ class MinimaxAgent:
 
     def get_move(self, board, game_logic):
         """
-        Khởi động quá trình tìm kiếm nước đi tốt nhất cho Máy (MAX).
+        Khởi động quá trình tìm kiếm nước đi tốt nhất cho Máy (MAX) sử dụng cắt tỉa Alpha-Beta.
         """
         start_time = time.time()
         self.node_count = 0
         
         best_score = -float('inf')
         best_move = None
+        
+        alpha = -float('inf')
+        beta = float('inf')
         
         # Lấy các ô trống trong bán kính 3 để tập trung đánh xoay quanh các quân cờ
         empty_cells = board.get_empty_cells(radius=3)
@@ -51,8 +54,8 @@ class MinimaxAgent:
             # Vì Evaluator trả điểm âm cho Người chơi, nên attack - defense -> Tăng điểm dương cho Máy
             move_score = attack_score - defense_score
             
-            # Gọi đệ quy hàm minimax
-            score = self._minimax_rec(board, self.max_depth - 1, False, move_score, r, c, game_logic)
+            # Gọi đệ quy hàm minimax với alpha, beta
+            score = self._minimax_rec(board, self.max_depth - 1, False, move_score, r, c, game_logic, alpha, beta)
             
             # Rút lại nước đi để làm sạch trạng thái bàn cờ
             board.undo_move(r, c)
@@ -62,17 +65,20 @@ class MinimaxAgent:
                 best_score = score
                 best_move = (r, c)
                 
+            # Cập nhật alpha
+            alpha = max(alpha, best_score)
+                
         execution_time = time.time() - start_time
         
         # Báo cáo ra terminal
-        print(f"[Minimax] Độ sâu: {self.max_depth} | Trạng thái đã xét: {self.node_count} "
+        print(f"[Alpha-Beta] Độ sâu: {self.max_depth} | Trạng thái đã xét: {self.node_count} "
               f"| Thời gian: {execution_time:.4f}s | Chọn nước: {best_move} | Điểm: {best_score}")
               
         return best_move, best_score
 
-    def _minimax_rec(self, board, depth, is_maximizing, current_score, last_r, last_c, game_logic):
+    def _minimax_rec(self, board, depth, is_maximizing, current_score, last_r, last_c, game_logic, alpha, beta):
         """
-        Hàm đệ quy duyệt cây Minimax theo cách cộng dồn điểm (current_score).
+        Hàm đệ quy duyệt cây Minimax theo cách cộng dồn điểm (current_score) với cắt tỉa Alpha-Beta.
         
         Args:
             board: Bàn cờ hiện tại
@@ -81,6 +87,8 @@ class MinimaxAgent:
             current_score: Điểm tổng tích lũy từ gốc cây xuống tới node hiện tại
             last_r, last_c: Tọa độ nước đi vừa thực hiện (để kiểm tra kết thúc/thắng)
             game_logic: Đối tượng xử lý luật chơi
+            alpha: Giá trị tốt nhất hiện tại cho nhánh MAX
+            beta: Giá trị tốt nhất hiện tại cho nhánh MIN
         """
         self.node_count += 1
         
@@ -115,9 +123,12 @@ class MinimaxAgent:
                 
                 move_score = attack_score - defense_score
                 
-                eval_score = self._minimax_rec(board, depth - 1, False, current_score + move_score, r, c, game_logic)
+                eval_score = self._minimax_rec(board, depth - 1, False, current_score + move_score, r, c, game_logic, alpha, beta)
                 board.undo_move(r, c)
                 max_eval = max(max_eval, eval_score)
+                alpha = max(alpha, eval_score)
+                if beta <= alpha:
+                    break
                 
             return max_eval
             
@@ -136,8 +147,11 @@ class MinimaxAgent:
                 
                 move_score = attack_score - defense_score
                 
-                eval_score = self._minimax_rec(board, depth - 1, True, current_score + move_score, r, c, game_logic)
+                eval_score = self._minimax_rec(board, depth - 1, True, current_score + move_score, r, c, game_logic, alpha, beta)
                 board.undo_move(r, c)
                 min_eval = min(min_eval, eval_score)
+                beta = min(beta, eval_score)
+                if beta <= alpha:
+                    break
                 
             return min_eval
