@@ -1,5 +1,4 @@
 import time
-import math
 
 class MinimaxAgent:
     """
@@ -8,20 +7,10 @@ class MinimaxAgent:
     """
 
     def __init__(self, depth, evaluator):
-        """
-        Khởi tạo AI với độ sâu giới hạn và bộ đánh giá trạng thái.
-        
-        Args:
-            depth (int): Độ sâu tối đa để duyệt cây.
-            evaluator (Evaluator): Đối tượng chứa hàm đánh giá cục bộ evaluate_local.
-        """
         self.max_depth = depth
         self.evaluator = evaluator
-        
-        # Hằng số định danh người chơi
-        self.PLAYER = 1   # X - Người chơi (MIN)
-        self.MACHINE = 2  # O - Máy (MAX)
-        
+        self.PLAYER = 1   # X (MIN)
+        self.MACHINE = 2  # O (MAX)
         self.node_count = 0
 
     def get_move(self, board, game_logic):
@@ -60,7 +49,6 @@ class MinimaxAgent:
             # Rút lại nước đi để làm sạch trạng thái bàn cờ
             board.undo_move(r, c)
             
-            # Cập nhật nước đi tốt nhất
             if score > best_score:
                 best_score = score
                 best_move = (r, c)
@@ -92,32 +80,22 @@ class MinimaxAgent:
         """
         self.node_count += 1
         
-        # 1. Kiểm tra điều kiện dừng (Base Cases)
-        # Truyền board vào hàm check_winner
+        # Kiểm tra thắng thua thực tế
         winner, _ = game_logic.check_winner(board)
         if winner == self.MACHINE:
-            return 10000000 + depth * 1000  # Ưu tiên thắng càng sớm càng tốt
+            return 100000000 + depth 
         elif winner == self.PLAYER:
-            return -10000000 - depth * 1000 # Trì hoãn thua càng lâu càng tốt
+            return -100000000 - depth 
             
-        # Nếu bàn cờ đầy hoặc đã duyệt hết độ sâu cho phép
         if board.is_full() or depth == 0:
-            return current_score
+            # Chỉ tính toán điểm Heuristic tại nút lá
+            return self._evaluate_board(board)
             
-        # Lấy danh sách ô trống để duyệt tiếp (bán kính 3)
-        empty_cells = board.get_empty_cells(radius=3)
+        moves = board.get_empty_cells(radius=2)
         
-        # 2. Xử lý logic 2 nhánh MAX và MIN
         if is_maximizing:
-            # Nhánh MAX (Lượt Máy)
             max_eval = -float('inf')
-            for r, c in empty_cells:
-                # Tính điểm phòng thủ trước
-                board.make_move(r, c, self.PLAYER)
-                defense_score = self.evaluator.evaluate_local(board.grid, r, c)
-                board.undo_move(r, c)
-                
-                # Tính điểm tấn công
+            for r, c in moves:
                 board.make_move(r, c, self.MACHINE)
                 attack_score = self.evaluator.evaluate_local(board.grid, r, c)
                 
@@ -131,17 +109,9 @@ class MinimaxAgent:
                     break
                 
             return max_eval
-            
         else:
-            # Nhánh MIN (Lượt Người)
             min_eval = float('inf')
-            for r, c in empty_cells:
-                # Tính điểm phòng thủ trước (Máy)
-                board.make_move(r, c, self.MACHINE)
-                defense_score = self.evaluator.evaluate_local(board.grid, r, c)
-                board.undo_move(r, c)
-                
-                # Tính điểm tấn công (Người)
+            for r, c in moves:
                 board.make_move(r, c, self.PLAYER)
                 attack_score = self.evaluator.evaluate_local(board.grid, r, c)
                 
@@ -155,3 +125,16 @@ class MinimaxAgent:
                     break
                 
             return min_eval
+
+    def _evaluate_board(self, board):
+        """
+        Đánh giá điểm số của toàn bộ bàn cờ.
+        """
+        total_score = 0
+        # Chỉ quét những ô có quân cờ để tính điểm
+        for r in range(board.size):
+            for c in range(board.size):
+                if board.grid[r][c] != 0:
+                    # evaluate_local sẽ trả về điểm dương cho MACHINE, âm cho PLAYER
+                    total_score += self.evaluator.evaluate_local(board.grid, r, c)
+        return total_score
