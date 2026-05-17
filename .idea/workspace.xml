@@ -1,16 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="ecc2ec9e-d5d3-4d07-a200-036daedc81b3" name="Changes" comment="" />
+    <list default="true" id="ecc2ec9e-d5d3-4d07-a200-036daedc81b3" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/source_code/ui/pygame_ui.py" beforeDir="false" afterPath="$PROJECT_DIR$/source_code/ui/pygame_ui.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 5,
-  "fromUser": false
-}]]></component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 5,
+  &quot;fromUser&quot;: false
+}</component>
   <component name="ProjectId" id="3DkQmQXZJgTCQEsJwJ54WBWVmB9" />
   <component name="ProjectViewState">
     <option name="abbreviatePackageNames" value="true" />
@@ -27,8 +32,10 @@
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "Python.main.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
+    "git-widget-placeholder": "main",
     "ignore.virus.scanning.warn.message": "true",
     "last_opened_file_path": "E:/Caro_game-master",
     "nodejs_package_manager_path": "npm",
@@ -96,6 +103,7 @@
       <option name="presentableId" value="Default" />
       <updated>1778823746439</updated>
       <workItem from="1778823748074" duration="60000" />
+      <workItem from="1779030925328" duration="131000" />
     </task>
     <servers />
   </component>

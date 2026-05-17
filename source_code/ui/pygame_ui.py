@@ -259,7 +259,7 @@ class PygameUI:
         hover_reset = self.rect_btn_reset.collidepoint(self.mouse_pos)
 
         # Nút Chế độ
-        mode_text = "Đánh với máy" if game_mode == MODE_PVE else "Đánh với người"
+        mode_text = "Đánh với người" if game_mode == MODE_PVE else "Đánh với máy"
         draw_button(self.rect_btn_mode, mode_text, hover_mode)
 
         # Nút Lượt đi
