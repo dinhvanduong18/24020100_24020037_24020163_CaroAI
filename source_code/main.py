@@ -90,6 +90,7 @@ def main():
             if best_move is not None:
                 row, col = best_move
                 board.make_move(row, col, ai_player)
+                board.last_move = (row, col)  # Lưu nước đi cuối cùng thực tế
                 print(f"👉 Máy ({'X' if ai_player == PLAYER_X else 'O'}) đánh tại tọa độ [{row}, {col}]")
                 
                 winner, winning_cells = logic.check_winner(board)
@@ -143,6 +144,7 @@ def main():
                 moved = board.make_move(row, col, current_player)
                 if not moved:
                     continue  
+                board.last_move = (row, col)  # Lưu nước đi cuối cùng thực tế
                     
                 print(f"\n👤 Người chơi ({'X' if current_player == PLAYER_X else 'O'}) đánh tại [{row}, {col}]")
                 

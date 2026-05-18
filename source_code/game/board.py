@@ -17,6 +17,7 @@ class Board:
         self.size = BOARD_SIZE
         # Tạo mảng 2D, tất cả các ô đều là EMPTY (0)
         self.grid = [[EMPTY] * self.size for _ in range(self.size)]
+        self.last_move = None  # Lưu tọa độ nước đi mới nhất (row, col)
 
     def is_valid_move(self, row: int, col: int) -> bool:
         """
@@ -52,6 +53,7 @@ class Board:
     def reset(self):
         """Đặt lại bàn cờ về trạng thái trống ban đầu."""
         self.grid = [[EMPTY] * self.size for _ in range(self.size)]
+        self.last_move = None
 
     def get_empty_cells(self, radius=2):
         """

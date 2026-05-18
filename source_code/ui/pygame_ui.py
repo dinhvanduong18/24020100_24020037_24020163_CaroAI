@@ -133,6 +133,16 @@ class PygameUI:
             )
             pygame.draw.rect(self.screen, COLOR_HOVER, hover_rect)
 
+        # Vẽ highlight nước đi cuối cùng (tô màu nền khác đi một chút để dễ nhận biết)
+        if getattr(board, 'last_move', None) is not None:
+            last_row, last_col = board.last_move
+            last_rect = pygame.Rect(
+                MARGIN + last_col * CELL_SIZE,
+                STATUS_HEIGHT + MARGIN + last_row * CELL_SIZE,
+                CELL_SIZE, CELL_SIZE
+            )
+            pygame.draw.rect(self.screen, (255, 235, 175), last_rect)
+
         # Vẽ các đường kẻ lưới (ngang và dọc)
         for i in range(BOARD_SIZE + 1):
             # Đường ngang
