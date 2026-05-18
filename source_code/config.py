@@ -38,6 +38,11 @@ COLOR_BTN_HOVER  = (100, 149, 237)   # Màu nền nút khi hover
 COLOR_BTN_TEXT   = (255, 255, 255)   # Màu chữ nút
 COLOR_PANEL_BG   = (230, 210, 170)   # Màu nền panel
 
+# --- Màu mới cho Menu & Game Over ---
+COLOR_BTN_MENU_BG = (139, 69, 19)    # Nâu (SaddleBrown)
+COLOR_BTN_MENU_HOVER = (160, 82, 45) # Nâu sáng (Sienna)
+COLOR_TEXT_DARK = (60, 30, 10)       # Nâu cực đậm
+
 # --- Chế độ chơi ---
 MODE_PVE = 0
 MODE_PVP = 1

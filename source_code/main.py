@@ -140,6 +140,15 @@ def main():
                 ui.update_hover(event.pos)
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if game_over:
+                    go_action = ui.handle_game_over_click(event.pos)
+                    if go_action == 'new':
+                        reset_game()
+                        continue
+                    elif go_action == 'menu':
+                        game_state = STATE_MENU
+                        continue
+                
                 action = ui.handle_button_click(event.pos)
                 if action == 'mode':
                     game_mode = MODE_PVP if game_mode == MODE_PVE else MODE_PVE
