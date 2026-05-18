@@ -26,8 +26,8 @@ class MinimaxAgent:
         alpha = -float('inf')
         beta = float('inf')
         
-        # Lấy các ô trống trong bán kính 3 để tập trung đánh xoay quanh các quân cờ
-        empty_cells = board.get_empty_cells(radius=3)
+        # Lấy các ô trống trong bán kính 2 để tập trung đánh xoay quanh các quân cờ
+        empty_cells = board.get_empty_cells(radius=2)
         
         for r, c in empty_cells:
             # 1. Tính điểm phòng thủ: Nếu Người (MIN) đánh vào đây thì được bao nhiêu?
