@@ -6,12 +6,13 @@ class MinimaxAgent:
     Cấu trúc có áp dụng cắt tỉa Alpha-Beta để tối ưu.
     """
 
-    def __init__(self, depth, evaluator):
+    def __init__(self, depth, evaluator, use_pruning=True):
         self.max_depth = depth
         self.evaluator = evaluator
         self.PLAYER = 1   # X (MIN)
         self.MACHINE = 2  # O (MAX)
         self.node_count = 0
+        self.use_pruning = use_pruning
 
     def get_move(self, board, game_logic):
         """
@@ -22,6 +23,7 @@ class MinimaxAgent:
         
         best_score = -float('inf')
         best_move = None
+        best_move_score = -float('inf')
         
         alpha = -float('inf')
         beta = float('inf')
@@ -39,6 +41,9 @@ class MinimaxAgent:
             board.make_move(r, c, self.MACHINE)
             attack_score = self.evaluator.evaluate_local(board.grid, r, c)
             
+            # Đánh giá toàn cục bàn cờ làm tiêu chí phụ (tie-breaker)
+            board_score = self._evaluate_board(board)
+            
             # Điểm của nước đi = Điểm tấn công của Máy - Điểm phòng thủ (tức là chặn Người chơi)
             # Vì Evaluator trả điểm âm cho Người chơi, nên attack - defense -> Tăng điểm dương cho Máy
             move_score = attack_score - defense_score
@@ -52,9 +57,17 @@ class MinimaxAgent:
             if score > best_score:
                 best_score = score
                 best_move = (r, c)
+                best_move_score = board_score
+            elif score == best_score:
+                # Nếu có nhiều nước đi dẫn đến cùng một kết quả (ví dụ đều bị thua)
+                # thì ưu tiên nước đi có điểm bàn cờ toàn cục (board_score) cao hơn
+                if best_move is None or board_score > best_move_score:
+                    best_move = (r, c)
+                    best_move_score = board_score
                 
             # Cập nhật alpha
-            alpha = max(alpha, best_score)
+            if self.use_pruning:
+                alpha = max(alpha, best_score)
                 
         execution_time = time.time() - start_time
         
@@ -101,9 +114,11 @@ class MinimaxAgent:
                 eval_score = self._minimax_rec(board, depth - 1, False, current_score, r, c, game_logic, alpha, beta)
                 board.undo_move(r, c)
                 max_eval = max(max_eval, eval_score)
-                alpha = max(alpha, eval_score)
-                if beta <= alpha:
-                    break
+                
+                if self.use_pruning:
+                    alpha = max(alpha, eval_score)
+                    if beta <= alpha:
+                        break
                 
             return max_eval
         else:
@@ -114,9 +129,11 @@ class MinimaxAgent:
                 eval_score = self._minimax_rec(board, depth - 1, True, current_score, r, c, game_logic, alpha, beta)
                 board.undo_move(r, c)
                 min_eval = min(min_eval, eval_score)
-                beta = min(beta, eval_score)
-                if beta <= alpha:
-                    break
+                
+                if self.use_pruning:
+                    beta = min(beta, eval_score)
+                    if beta <= alpha:
+                        break
                 
             return min_eval
 
