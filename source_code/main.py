@@ -30,38 +30,58 @@ def main():
     game_mode      = MODE_PVE
     player_first   = True        # True: Người đi trước, False: Máy đi trước
     
-    current_player = PLAYER_X    # Người chơi (X) luôn đi trước
+    current_player = PLAYER_X    # Quân hiện tại đang đi
+    human_player   = PLAYER_X    # Quân của Người chơi
+    ai_player      = PLAYER_O    # Quân của Máy (AI)
     game_over      = False
     winner         = None
     winning_cells  = []
     is_draw        = False
 
     def reset_game():
-        nonlocal current_player, game_over, winner, winning_cells, is_draw
+        nonlocal current_player, human_player, ai_player, game_over, winner, winning_cells, is_draw
         board.reset()
-        if game_mode == MODE_PVE and not player_first:
-            current_player = PLAYER_O
+        if game_mode == MODE_PVE:
+            if player_first:
+                human_player = PLAYER_X
+                ai_player    = PLAYER_O
+            else:
+                human_player = PLAYER_O
+                ai_player    = PLAYER_X
+            
+            # Đồng bộ vai trò động cho AI Agent và Evaluator
+            ai_agent.PLAYER  = human_player
+            ai_agent.MACHINE = ai_player
+            evaluator.PLAYER  = human_player
+            evaluator.MACHINE = ai_player
         else:
-            current_player = PLAYER_X
+            # Chế độ PVP: Người đi trước mặc định là X, người thứ 2 là O
+            human_player = PLAYER_X
+            ai_player    = PLAYER_O
+            
+        current_player = PLAYER_X  # PLAYER_X (quân X) luôn đi trước
         game_over = False
         winner = None
         winning_cells = []
         is_draw = False
-        print("\n--- Ván mới bắt đầu! ---")
+        print(f"\n--- Ván mới bắt đầu! (Chế độ: {'PVE' if game_mode == MODE_PVE else 'PVP'}, Đi trước: {'Người' if player_first or game_mode == MODE_PVP else 'Máy'}) ---")
+
+    # Gọi reset_game ngay khi bắt đầu để thiết lập trạng thái ban đầu một cách nhất quán
+    reset_game()
 
     # ── 2. GAME LOOP ─────────────────────────────────────────
     running = True
     while running:
 
         # ── 2a. XỬ LÝ LƯỢT AI (MÁY CHƠI) ──────────────────────────
-        is_ai_turn = (not game_over and game_mode == MODE_PVE and current_player == PLAYER_O)
+        is_ai_turn = (not game_over and game_mode == MODE_PVE and current_player == ai_player)
         
         if is_ai_turn:
             print("\n🤖 AI đang suy nghĩ...")
             
             ui.draw_board(board)
             ui.draw_pieces(board)
-            ui.draw_status_bar(current_player, game_over, winner, is_draw)
+            ui.draw_status_bar(current_player, game_over, winner, is_draw, game_mode, ai_player)
             ui.draw_panel(game_mode, player_first)
             ui.render()
             
@@ -69,13 +89,13 @@ def main():
             
             if best_move is not None:
                 row, col = best_move
-                board.make_move(row, col, PLAYER_O)
-                print(f"👉 Máy (O) đánh tại tọa độ [{row}, {col}]")
+                board.make_move(row, col, ai_player)
+                print(f"👉 Máy ({'X' if ai_player == PLAYER_X else 'O'}) đánh tại tọa độ [{row}, {col}]")
                 
                 winner, winning_cells = logic.check_winner(board)
                 if winner is not None:
                     game_over = True
-                    print(f"🏆 MÁY (O) ĐÃ THẮNG!")
+                    print(f"🏆 MÁY ({'X' if ai_player == PLAYER_X else 'O'}) ĐÃ THẮNG!")
                     ui.hover_cell = None
                 elif logic.is_draw(board):
                     game_over = True
@@ -83,7 +103,7 @@ def main():
                     print("🤝 HÒA! Bàn cờ đã đầy.")
                     ui.hover_cell = None
                 else:
-                    current_player = PLAYER_X
+                    current_player = human_player
 
         # ── 2b. XỬ LÝ SỰ KIỆN TỪ BÀN PHÍM/CHUỘT ─────────────────
         for event in pygame.event.get():
@@ -137,7 +157,7 @@ def main():
                     print("🤝 HÒA! Bàn cờ đã đầy.")
                     ui.hover_cell = None
                 else:
-                    current_player = PLAYER_O if current_player == PLAYER_X else PLAYER_X
+                    current_player = ai_player if current_player == human_player else human_player
 
         # ── 2c. VẼ MÀN HÌNH ─────────────────────────────────
         ui.draw_board(board)
@@ -146,7 +166,7 @@ def main():
         if game_over and winning_cells:
             ui.draw_winning_line(winning_cells)
 
-        ui.draw_status_bar(current_player, game_over, winner, is_draw)
+        ui.draw_status_bar(current_player, game_over, winner, is_draw, game_mode, ai_player)
         ui.draw_panel(game_mode, player_first)
 
         ui.render()

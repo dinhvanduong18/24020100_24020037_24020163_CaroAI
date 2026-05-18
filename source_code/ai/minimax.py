@@ -31,25 +31,22 @@ class MinimaxAgent:
         # Lấy các ô trống trong bán kính 2 để tập trung đánh xoay quanh các quân cờ
         empty_cells = board.get_empty_cells(radius=2)
         
+        # Sắp xếp các nước đi ứng viên ở gốc cây để tối ưu cắt tỉa và sửa lỗi Horizon Effect (chặn nước đi cùng điểm)
+        scored_cells = []
         for r, c in empty_cells:
-            # 1. Tính điểm phòng thủ: Nếu Người (MIN) đánh vào đây thì được bao nhiêu?
-            board.make_move(r, c, self.PLAYER)
-            defense_score = self.evaluator.evaluate_local(board.grid, r, c)
-            board.undo_move(r, c)
-            
-            # 2. Tính điểm tấn công: Máy (MAX) thực sự đánh vào đây
             board.make_move(r, c, self.MACHINE)
-            attack_score = self.evaluator.evaluate_local(board.grid, r, c)
+            score = self.evaluator.evaluate_board_global(board.grid)
+            board.undo_move(r, c)
+            scored_cells.append((score, (r, c)))
             
-            # Đánh giá toàn cục bàn cờ làm tiêu chí phụ (tie-breaker)
-            board_score = self._evaluate_board(board)
-            
-            # Điểm của nước đi = Điểm tấn công của Máy - Điểm phòng thủ (tức là chặn Người chơi)
-            # Vì Evaluator trả điểm âm cho Người chơi, nên attack - defense -> Tăng điểm dương cho Máy
-            move_score = attack_score - defense_score
+        # Sắp xếp giảm dần để ưu tiên các nước có điểm Heuristic cao nhất lên đầu tiên
+        scored_cells.sort(key=lambda x: x[0], reverse=True)
+        for board_score, (r, c) in scored_cells:
+            # Máy (MAX) thử thực hiện nước đi
+            board.make_move(r, c, self.MACHINE)
             
             # Gọi đệ quy hàm minimax với alpha, beta
-            score = self._minimax_rec(board, self.max_depth - 1, False, move_score, r, c, game_logic, alpha, beta)
+            score = self._minimax_rec(board, self.max_depth - 1, False, r, c, game_logic, alpha, beta)
             
             # Rút lại nước đi để làm sạch trạng thái bàn cờ
             board.undo_move(r, c)
@@ -69,23 +66,23 @@ class MinimaxAgent:
             if self.use_pruning:
                 alpha = max(alpha, best_score)
                 
+
         execution_time = time.time() - start_time
         
-        # Báo cáo ra terminal
-        print(f"[Alpha-Beta] Độ sâu: {self.max_depth} | Trạng thái đã xét: {self.node_count} "
-              f"| Thời gian: {execution_time:.4f}s | Chọn nước: {best_move} | Điểm: {best_score}")
+        # Bao cao ra terminal (su dung tieng Viet khong dau de tranh UnicodeEncodeError tren Windows Console mac dinh)
+        print(f"[Alpha-Beta] Do sau: {self.max_depth} | Trang thai da xet: {self.node_count} "
+              f"| Thoi gian: {execution_time:.4f}s | Chon nuoc: {best_move} | Diem: {best_score}")
               
         return best_move, best_score
 
-    def _minimax_rec(self, board, depth, is_maximizing, current_score, last_r, last_c, game_logic, alpha, beta):
+    def _minimax_rec(self, board, depth, is_maximizing, last_r, last_c, game_logic, alpha, beta):
         """
-        Hàm đệ quy duyệt cây Minimax theo cách cộng dồn điểm (current_score) với cắt tỉa Alpha-Beta.
+        Hàm đệ quy duyệt cây Minimax với cắt tỉa Alpha-Beta.
         
         Args:
             board: Bàn cờ hiện tại
             depth: Độ sâu còn lại
             is_maximizing: True (MAX - Máy), False (MIN - Người)
-            current_score: Điểm tổng tích lũy từ gốc cây xuống tới node hiện tại
             last_r, last_c: Tọa độ nước đi vừa thực hiện (để kiểm tra kết thúc/thắng)
             game_logic: Đối tượng xử lý luật chơi
             alpha: Giá trị tốt nhất hiện tại cho nhánh MAX
@@ -111,14 +108,12 @@ class MinimaxAgent:
             for r, c in moves:
                 board.make_move(r, c, self.MACHINE)
                 
-                eval_score = self._minimax_rec(board, depth - 1, False, current_score, r, c, game_logic, alpha, beta)
+                eval_score = self._minimax_rec(board, depth - 1, False, r, c, game_logic, alpha, beta)
                 board.undo_move(r, c)
                 max_eval = max(max_eval, eval_score)
-                
-                if self.use_pruning:
-                    alpha = max(alpha, eval_score)
-                    if beta <= alpha:
-                        break
+                alpha = max(alpha, eval_score)
+                if beta <= alpha:
+                    break
                 
             return max_eval
         else:
@@ -126,14 +121,12 @@ class MinimaxAgent:
             for r, c in moves:
                 board.make_move(r, c, self.PLAYER)
                 
-                eval_score = self._minimax_rec(board, depth - 1, True, current_score, r, c, game_logic, alpha, beta)
+                eval_score = self._minimax_rec(board, depth - 1, True, r, c, game_logic, alpha, beta)
                 board.undo_move(r, c)
                 min_eval = min(min_eval, eval_score)
-                
-                if self.use_pruning:
-                    beta = min(beta, eval_score)
-                    if beta <= alpha:
-                        break
+                beta = min(beta, eval_score)
+                if beta <= alpha:
+                    break
                 
             return min_eval
 
@@ -141,11 +134,5 @@ class MinimaxAgent:
         """
         Đánh giá điểm số của toàn bộ bàn cờ.
         """
-        total_score = 0
-        # Chỉ quét những ô có quân cờ để tính điểm
-        for r in range(board.size):
-            for c in range(board.size):
-                if board.grid[r][c] != 0:
-                    # evaluate_local sẽ trả về điểm dương cho MACHINE, âm cho PLAYER
-                    total_score += self.evaluator.evaluate_local(board.grid, r, c)
-        return total_score
+        return self.evaluator.evaluate_board_global(board.grid)
+

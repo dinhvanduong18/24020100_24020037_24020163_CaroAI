@@ -54,7 +54,7 @@ class PygameUI:
     # PHẦN VẼ GIAO DIỆN
     # ----------------------------------------------------------
 
-    def draw_status_bar(self, current_player: int, game_over: bool, winner, is_draw: bool):
+    def draw_status_bar(self, current_player: int, game_over: bool, winner, is_draw: bool, game_mode: int = MODE_PVP, ai_player: int = None):
         """
         Vẽ thanh trạng thái ở phía trên cùng màn hình.
         Hiển thị lượt chơi hiện tại hoặc kết quả game.
@@ -67,36 +67,46 @@ class PygameUI:
         if game_over:
             if is_draw:
                 text = "🤝  HÒA!  Nhấn R để chơi lại"
-            else:
-                name = "X" if winner == PLAYER_X else "O"
-                color = COLOR_X if winner == PLAYER_X else COLOR_O
-                text = f"🏆  Người chơi {name} thắng!  Nhấn R để chơi lại"
-        else:
-            name = "X" if current_player == PLAYER_X else "O"
-            color = COLOR_X if current_player == PLAYER_X else COLOR_O
-            text = f"Lượt của người chơi:  {name}"
-
-        # Render text lên màn hình (căn giữa)
-        if game_over:
-            if is_draw:
                 surf = self.font_status.render(text, True, COLOR_WHITE)
+                x_pos = (WINDOW_WIDTH - surf.get_width()) // 2
+                y_pos = (STATUS_HEIGHT - surf.get_height()) // 2
+                self.screen.blit(surf, (x_pos, y_pos))
             else:
+                symbol = "X" if winner == PLAYER_X else "O"
+                color = COLOR_X if winner == PLAYER_X else COLOR_O
+                if game_mode == MODE_PVE:
+                    if winner == ai_player:
+                        text = f"🏆  Máy ({symbol}) thắng!  Nhấn R để chơi lại"
+                    else:
+                        text = f"🏆  Bạn ({symbol}) thắng!  Nhấn R để chơi lại"
+                else:
+                    text = f"🏆  Người chơi {symbol} thắng!  Nhấn R để chơi lại"
+                
                 surf = self.font_status.render(text, True, color)
+                x_pos = (WINDOW_WIDTH - surf.get_width()) // 2
+                y_pos = (STATUS_HEIGHT - surf.get_height()) // 2
+                self.screen.blit(surf, (x_pos, y_pos))
         else:
+            symbol = "X" if current_player == PLAYER_X else "O"
+            color = COLOR_X if current_player == PLAYER_X else COLOR_O
+            
+            if game_mode == MODE_PVE:
+                if current_player == ai_player:
+                    prefix_text = "Lượt của Máy (AI):  "
+                else:
+                    prefix_text = "Lượt của Bạn:  "
+            else:
+                prefix_text = "Lượt của người chơi:  "
+                
             # Render phần đầu với màu trắng, phần tên người chơi với màu riêng
-            surf_pre  = self.font_status.render("Lượt của người chơi:  ", True, COLOR_STATUS_TXT)
-            surf_name = self.font_status.render(name, True, color)
+            surf_pre  = self.font_status.render(prefix_text, True, COLOR_STATUS_TXT)
+            surf_name = self.font_status.render(symbol, True, color)
             # Tính vị trí căn giữa
             total_w = surf_pre.get_width() + surf_name.get_width()
             x_start = (WINDOW_WIDTH - total_w) // 2
             y_pos   = (STATUS_HEIGHT - surf_pre.get_height()) // 2
             self.screen.blit(surf_pre,  (x_start, y_pos))
             self.screen.blit(surf_name, (x_start + surf_pre.get_width(), y_pos))
-            return
-
-        x_pos = (WINDOW_WIDTH - surf.get_width()) // 2
-        y_pos = (STATUS_HEIGHT - surf.get_height()) // 2
-        self.screen.blit(surf, (x_pos, y_pos))
 
     def draw_board(self, board: Board):
         """
