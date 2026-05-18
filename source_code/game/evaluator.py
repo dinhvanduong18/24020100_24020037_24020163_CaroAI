@@ -1,3 +1,5 @@
+from config import WIN_COUNT
+
 class Evaluator:
     # Hằng số quy định trạng thái ô cờ
     EMPTY = 0
@@ -7,68 +9,79 @@ class Evaluator:
     def __init__(self):
         pass
 
-    def evaluate_local(self, board, last_r, last_c):
+    def evaluate_window(self, window):
         """
-        Đánh giá điểm số cục bộ tại tọa độ vừa đánh (last_r, last_c)
-        sử dụng phương pháp cửa sổ trượt tối ưu (High Performance).
+        Đánh giá điểm số của duy nhất MỘT cửa sổ.
+        Trả về điểm số dương cho MACHINE (MAX) và âm cho PLAYER (MIN).
         """
-        player = board[last_r][last_c]
-        if player == self.EMPTY:
+        player_count = window.count(self.PLAYER)
+        machine_count = window.count(self.MACHINE)
+        
+        # 1. Cửa sổ bị chặn hoặc chứa quân của cả hai bên -> Vô hại
+        if player_count > 0 and machine_count > 0:
             return 0
             
-        opponent = self.MACHINE if player == self.PLAYER else self.PLAYER
-        # Điểm số trả về sẽ cộng dương nếu là MACHINE, âm nếu là PLAYER
-        sign = 1 if player == self.MACHINE else -1
-        
-        directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
+        # 2. Cửa sổ chỉ chứa quân của MACHINE (MAX) - Tấn công
+        if machine_count > 0:
+            if machine_count == WIN_COUNT:
+                return 100000000
+            elif machine_count == WIN_COUNT - 1:
+                return 200000
+            elif machine_count == WIN_COUNT - 2:
+                return 20000
+            elif machine_count == WIN_COUNT - 3:
+                return 100
+            elif machine_count == WIN_COUNT - 4:
+                return 10
+                
+        # 3. Cửa sổ chỉ chứa quân của PLAYER (MIN) - Phòng thủ (Điểm trừ cực nặng)
+        if player_count > 0:
+            if player_count == WIN_COUNT:
+                return -100000000
+            elif player_count == WIN_COUNT - 1:
+                # Đặt điểm số phòng thủ cực lớn (-5,000,000) để đảm bảo không một tổ hợp tấn công nào
+                # của Máy (trừ nước thắng trực tiếp) có thể che mờ hoặc lấn át nước đi chặn này.
+                return -5000000
+            elif player_count == WIN_COUNT - 2:
+                return -300000
+            elif player_count == WIN_COUNT - 3:
+                return -1000
+            elif player_count == WIN_COUNT - 4:
+                return -100
+                
+        return 0
+
+    def evaluate_board_global(self, board_grid):
+        """
+        Quét toàn bộ bàn cờ theo hệ thống cửa sổ trượt không trùng lặp.
+        Bao quát 100% bàn cờ và giải quyết hoàn toàn vấn đề sót/trùng điểm.
+        """
         total_score = 0
-        rows = len(board)
-        cols = len(board[0])
+        size = len(board_grid)
+        win_count = WIN_COUNT  # Kích thước cửa sổ bằng WIN_COUNT động từ config
         
-        for dr, dc in directions:
-            # Xét 4 cửa sổ kích thước 4 có chứa quân cờ vừa đánh (vị trí step = 0)
-            # Cửa sổ bắt đầu từ start_step: -3, -2, -1, 0
-            for start_step in range(-3, 1):
-                player_count = 0
-                is_blocked = False
+        # --- 1. Quét theo hàng NGANG ---
+        for r in range(size):
+            for c in range(size - win_count + 1):
+                window = [board_grid[r][c + i] for i in range(win_count)]
+                total_score += self.evaluate_window(window)
                 
-                # Kiểm tra 4 ô trong cửa sổ hiện tại
-                for step in range(start_step, start_step + 4):
-                    r = last_r + step * dr
-                    c = last_c + step * dc
-                    
-                    # Nếu ra ngoài biên hoặc gặp quân đối thủ -> Cửa sổ này vô dụng
-                    if r < 0 or r >= rows or c < 0 or c >= cols:
-                        is_blocked = True
-                        break
-                        
-                    cell = board[r][c]
-                    if cell == opponent:
-                        is_blocked = True
-                        break
-                    elif cell == player:
-                        player_count += 1
-                        # Thưởng điểm cho các quân cờ nằm liên tiếp nhau (Tăng mạnh)
-                        total_score += 100 * sign 
+        # --- 2. Quét theo hàng DỌC ---
+        for c in range(size):
+            for r in range(size - win_count + 1):
+                window = [board_grid[r + i][c] for i in range(win_count)]
+                total_score += self.evaluate_window(window)
                 
-                # Chỉ cộng điểm nếu cửa sổ có khả năng thắng (không bị chặn)
-                if not is_blocked:
-                    if player_count == 4:
-                        total_score += 100000000 * sign 
-                    elif player_count == 3:
-                        total_score += 200000 * sign   # 200 Ngàn
-                    elif player_count == 2:
-                        total_score += 20000 * sign    # 20 Ngàn
-                    
-        # Thưởng điểm áp sát (Proximity bonus)
-        # Nếu nước đi nằm ngay sát (radius 1) một quân cờ bất kỳ, cộng thêm điểm
-        # Điều này giúp AI đánh bám sát hơn thay vì nhảy ra xa
-        for dr in range(-1, 2):
-            for dc in range(-1, 2):
-                if dr == 0 and dc == 0: continue
-                nr, nc = last_r + dr, last_c + dc
-                if 0 <= nr < rows and 0 <= nc < cols:
-                    if board[nr][nc] != self.EMPTY:
-                        total_score += 100 * sign
-                        
+        # --- 3. Quét đường CHÉO CHÍNH (Từ trên-trái xuống dưới-phải) ---
+        for r in range(size - win_count + 1):
+            for c in range(size - win_count + 1):
+                window = [board_grid[r + i][c + i] for i in range(win_count)]
+                total_score += self.evaluate_window(window)
+                
+        # --- 4. Quét đường CHÉO PHỤ (Từ trên-phải xuống dưới-trái) ---
+        for r in range(size - win_count + 1):
+            for c in range(win_count - 1, size):
+                window = [board_grid[r + i][c - i] for i in range(win_count)]
+                total_score += self.evaluate_window(window)
+                
         return total_score

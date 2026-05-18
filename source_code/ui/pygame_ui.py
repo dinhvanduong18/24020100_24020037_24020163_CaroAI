@@ -4,12 +4,14 @@
 
 import pygame
 from config import (
-    BOARD_SIZE, CELL_SIZE, MARGIN, STATUS_HEIGHT,
+    BOARD_SIZE, CELL_SIZE, MARGIN, STATUS_HEIGHT, PANEL_WIDTH,
     WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE,
     PLAYER_X, PLAYER_O, EMPTY,
     COLOR_BG, COLOR_GRID, COLOR_X, COLOR_O,
     COLOR_STATUS_BG, COLOR_STATUS_TXT,
-    COLOR_WIN_LINE, COLOR_HOVER, COLOR_BLACK, COLOR_WHITE
+    COLOR_WIN_LINE, COLOR_HOVER, COLOR_BLACK, COLOR_WHITE,
+    COLOR_BTN_BG, COLOR_BTN_HOVER, COLOR_BTN_TEXT, COLOR_PANEL_BG,
+    MODE_PVE, MODE_PVP
 )
 from game.board import Board
 
@@ -32,15 +34,27 @@ class PygameUI:
         # Font chữ cho trạng thái game
         self.font_status = pygame.font.SysFont("segoeui", 22, bold=True)
         self.font_symbol = pygame.font.SysFont("segoeui", 32, bold=True)
+        self.font_btn = pygame.font.SysFont("segoeui", 20, bold=True)
 
         # Lưu vị trí chuột hiện tại để vẽ hover effect
         self.hover_cell = None
+        self.mouse_pos = (0, 0)
+
+        # Định nghĩa vùng nút bấm
+        panel_x = CELL_SIZE * BOARD_SIZE + MARGIN * 2
+        btn_w = 220
+        btn_h = 50
+        btn_x = panel_x + (PANEL_WIDTH - btn_w) // 2
+        
+        self.rect_btn_mode = pygame.Rect(btn_x, 100, btn_w, btn_h)
+        self.rect_btn_first = pygame.Rect(btn_x, 180, btn_w, btn_h)
+        self.rect_btn_reset = pygame.Rect(btn_x, 260, btn_w, btn_h)
 
     # ----------------------------------------------------------
     # PHẦN VẼ GIAO DIỆN
     # ----------------------------------------------------------
 
-    def draw_status_bar(self, current_player: int, game_over: bool, winner, is_draw: bool):
+    def draw_status_bar(self, current_player: int, game_over: bool, winner, is_draw: bool, game_mode: int = MODE_PVP, ai_player: int = None):
         """
         Vẽ thanh trạng thái ở phía trên cùng màn hình.
         Hiển thị lượt chơi hiện tại hoặc kết quả game.
@@ -53,36 +67,46 @@ class PygameUI:
         if game_over:
             if is_draw:
                 text = "🤝  HÒA!  Nhấn R để chơi lại"
-            else:
-                name = "X" if winner == PLAYER_X else "O"
-                color = COLOR_X if winner == PLAYER_X else COLOR_O
-                text = f"🏆  Người chơi {name} thắng!  Nhấn R để chơi lại"
-        else:
-            name = "X" if current_player == PLAYER_X else "O"
-            color = COLOR_X if current_player == PLAYER_X else COLOR_O
-            text = f"Lượt của người chơi:  {name}"
-
-        # Render text lên màn hình (căn giữa)
-        if game_over:
-            if is_draw:
                 surf = self.font_status.render(text, True, COLOR_WHITE)
+                x_pos = (WINDOW_WIDTH - surf.get_width()) // 2
+                y_pos = (STATUS_HEIGHT - surf.get_height()) // 2
+                self.screen.blit(surf, (x_pos, y_pos))
             else:
+                symbol = "X" if winner == PLAYER_X else "O"
+                color = COLOR_X if winner == PLAYER_X else COLOR_O
+                if game_mode == MODE_PVE:
+                    if winner == ai_player:
+                        text = f"🏆  Máy ({symbol}) thắng!  Nhấn R để chơi lại"
+                    else:
+                        text = f"🏆  Bạn ({symbol}) thắng!  Nhấn R để chơi lại"
+                else:
+                    text = f"🏆  Người chơi {symbol} thắng!  Nhấn R để chơi lại"
+                
                 surf = self.font_status.render(text, True, color)
+                x_pos = (WINDOW_WIDTH - surf.get_width()) // 2
+                y_pos = (STATUS_HEIGHT - surf.get_height()) // 2
+                self.screen.blit(surf, (x_pos, y_pos))
         else:
+            symbol = "X" if current_player == PLAYER_X else "O"
+            color = COLOR_X if current_player == PLAYER_X else COLOR_O
+            
+            if game_mode == MODE_PVE:
+                if current_player == ai_player:
+                    prefix_text = "Lượt của Máy (AI):  "
+                else:
+                    prefix_text = "Lượt của Bạn:  "
+            else:
+                prefix_text = "Lượt của người chơi:  "
+                
             # Render phần đầu với màu trắng, phần tên người chơi với màu riêng
-            surf_pre  = self.font_status.render("Lượt của người chơi:  ", True, COLOR_STATUS_TXT)
-            surf_name = self.font_status.render(name, True, color)
+            surf_pre  = self.font_status.render(prefix_text, True, COLOR_STATUS_TXT)
+            surf_name = self.font_status.render(symbol, True, color)
             # Tính vị trí căn giữa
             total_w = surf_pre.get_width() + surf_name.get_width()
             x_start = (WINDOW_WIDTH - total_w) // 2
             y_pos   = (STATUS_HEIGHT - surf_pre.get_height()) // 2
             self.screen.blit(surf_pre,  (x_start, y_pos))
             self.screen.blit(surf_name, (x_start + surf_pre.get_width(), y_pos))
-            return
-
-        x_pos = (WINDOW_WIDTH - surf.get_width()) // 2
-        y_pos = (STATUS_HEIGHT - surf.get_height()) // 2
-        self.screen.blit(surf, (x_pos, y_pos))
 
     def draw_board(self, board: Board):
         """
@@ -187,6 +211,7 @@ class PygameUI:
         Cập nhật ô đang được trỏ chuột (dùng cho hover effect).
         Gọi mỗi lần chuột di chuyển.
         """
+        self.mouse_pos = mouse_pos
         row, col = self.get_row_col_from_mouse(mouse_pos)
         if 0 <= row < BOARD_SIZE and 0 <= col < BOARD_SIZE:
             self.hover_cell = (row, col)
@@ -212,6 +237,57 @@ class PygameUI:
         col = (x - MARGIN) // CELL_SIZE
         row = (y - STATUS_HEIGHT - MARGIN) // CELL_SIZE
         return int(row), int(col)
+
+    def render(self):
+        """Cập nhật toàn bộ màn hình (gọi cuối mỗi vòng lặp)."""
+        pygame.display.update()
+
+    def draw_panel(self, game_mode, player_first):
+        """Vẽ bảng điều khiển bên phải."""
+        panel_x = CELL_SIZE * BOARD_SIZE + MARGIN * 2
+        pygame.draw.rect(self.screen, COLOR_PANEL_BG, (panel_x, 0, PANEL_WIDTH, WINDOW_HEIGHT))
+        pygame.draw.line(self.screen, COLOR_GRID, (panel_x, 0), (panel_x, WINDOW_HEIGHT), 2)
+
+        def draw_button(rect, text, is_hover, is_disabled=False):
+            color = COLOR_BTN_BG
+            if is_disabled:
+                color = (150, 150, 150) # Gray
+            elif is_hover:
+                color = COLOR_BTN_HOVER
+                
+            pygame.draw.rect(self.screen, color, rect, border_radius=8)
+            pygame.draw.rect(self.screen, COLOR_GRID, rect, 2, border_radius=8)
+            
+            surf = self.font_btn.render(text, True, COLOR_BTN_TEXT)
+            txt_x = rect.x + (rect.width - surf.get_width()) // 2
+            txt_y = rect.y + (rect.height - surf.get_height()) // 2
+            self.screen.blit(surf, (txt_x, txt_y))
+
+        # Trạng thái hover
+        hover_mode = self.rect_btn_mode.collidepoint(self.mouse_pos)
+        hover_first = self.rect_btn_first.collidepoint(self.mouse_pos)
+        hover_reset = self.rect_btn_reset.collidepoint(self.mouse_pos)
+
+        # Nút Chế độ
+        mode_text = "Đánh với người" if game_mode == MODE_PVE else "Đánh với máy"
+        draw_button(self.rect_btn_mode, mode_text, hover_mode)
+
+        # Nút Lượt đi
+        first_text = "Người đi trước" if player_first else "Máy đi trước"
+        draw_button(self.rect_btn_first, first_text, hover_first, is_disabled=(game_mode != MODE_PVE))
+
+        # Nút Dừng chơi / Reset
+        draw_button(self.rect_btn_reset, "Ván mới", hover_reset)
+        
+    def handle_button_click(self, mouse_pos):
+        """Trả về tên nút được bấm ('mode', 'first', 'reset') hoặc None."""
+        if self.rect_btn_mode.collidepoint(mouse_pos):
+            return 'mode'
+        if self.rect_btn_first.collidepoint(mouse_pos):
+            return 'first'
+        if self.rect_btn_reset.collidepoint(mouse_pos):
+            return 'reset'
+        return None
 
     def render(self):
         """Cập nhật toàn bộ màn hình (gọi cuối mỗi vòng lặp)."""
