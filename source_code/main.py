@@ -69,10 +69,30 @@ def main():
     # Gọi reset_game ngay khi bắt đầu để thiết lập trạng thái ban đầu một cách nhất quán
     reset_game()
 
+    STATE_MENU = 0
+    STATE_PLAYING = 1
+    game_state = STATE_MENU
+
     # ── 2. GAME LOOP ─────────────────────────────────────────
     running = True
     while running:
-
+        if game_state == STATE_MENU:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.MOUSEMOTION:
+                    ui.update_hover(event.pos)
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if hasattr(ui, 'rect_btn_start') and ui.rect_btn_start and ui.rect_btn_start.collidepoint(event.pos):
+                        game_state = STATE_PLAYING
+                        reset_game()
+            
+            if running:
+                ui.draw_main_menu()
+                ui.render()
+                clock.tick(FPS)
+            continue
+            
         # ── 2a. XỬ LÝ LƯỢT AI (MÁY CHƠI) ──────────────────────────
         is_ai_turn = (not game_over and game_mode == MODE_PVE and current_player == ai_player)
         
@@ -90,6 +110,7 @@ def main():
             if best_move is not None:
                 row, col = best_move
                 board.make_move(row, col, ai_player)
+                board.last_move = (row, col)  # Lưu nước đi cuối cùng thực tế
                 print(f"👉 Máy ({'X' if ai_player == PLAYER_X else 'O'}) đánh tại tọa độ [{row}, {col}]")
                 
                 winner, winning_cells = logic.check_winner(board)
@@ -143,6 +164,7 @@ def main():
                 moved = board.make_move(row, col, current_player)
                 if not moved:
                     continue  
+                board.last_move = (row, col)  # Lưu nước đi cuối cùng thực tế
                     
                 print(f"\n👤 Người chơi ({'X' if current_player == PLAYER_X else 'O'}) đánh tại [{row}, {col}]")
                 
@@ -168,6 +190,9 @@ def main():
 
         ui.draw_status_bar(current_player, game_over, winner, is_draw, game_mode, ai_player)
         ui.draw_panel(game_mode, player_first)
+
+        if game_over:
+            ui.draw_game_over(winner, is_draw, game_mode, ai_player)
 
         ui.render()
 

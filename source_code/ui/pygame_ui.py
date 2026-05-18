@@ -3,6 +3,7 @@
 # ============================================================
 
 import pygame
+import math
 from config import (
     BOARD_SIZE, CELL_SIZE, MARGIN, STATUS_HEIGHT, PANEL_WIDTH,
     WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE,
@@ -49,6 +50,7 @@ class PygameUI:
         self.rect_btn_mode = pygame.Rect(btn_x, 100, btn_w, btn_h)
         self.rect_btn_first = pygame.Rect(btn_x, 180, btn_w, btn_h)
         self.rect_btn_reset = pygame.Rect(btn_x, 260, btn_w, btn_h)
+        self.rect_btn_start = None  # Menu chính
 
     # ----------------------------------------------------------
     # PHẦN VẼ GIAO DIỆN
@@ -63,29 +65,16 @@ class PygameUI:
         pygame.draw.rect(self.screen, COLOR_STATUS_BG,
                          (0, 0, WINDOW_WIDTH, STATUS_HEIGHT))
 
+        # Khu vực bảng game (bên trái)
+        board_area_width = CELL_SIZE * BOARD_SIZE + MARGIN * 2
+
         # Xác định nội dung text
         if game_over:
-            if is_draw:
-                text = "🤝  HÒA!  Nhấn R để chơi lại"
-                surf = self.font_status.render(text, True, COLOR_WHITE)
-                x_pos = (WINDOW_WIDTH - surf.get_width()) // 2
-                y_pos = (STATUS_HEIGHT - surf.get_height()) // 2
-                self.screen.blit(surf, (x_pos, y_pos))
-            else:
-                symbol = "X" if winner == PLAYER_X else "O"
-                color = COLOR_X if winner == PLAYER_X else COLOR_O
-                if game_mode == MODE_PVE:
-                    if winner == ai_player:
-                        text = f"🏆  Máy ({symbol}) thắng!  Nhấn R để chơi lại"
-                    else:
-                        text = f"🏆  Bạn ({symbol}) thắng!  Nhấn R để chơi lại"
-                else:
-                    text = f"🏆  Người chơi {symbol} thắng!  Nhấn R để chơi lại"
-                
-                surf = self.font_status.render(text, True, color)
-                x_pos = (WINDOW_WIDTH - surf.get_width()) // 2
-                y_pos = (STATUS_HEIGHT - surf.get_height()) // 2
-                self.screen.blit(surf, (x_pos, y_pos))
+            text = "TRẬN ĐẤU KẾT THÚC"
+            surf = self.font_status.render(text, True, COLOR_WHITE)
+            x_pos = (board_area_width - surf.get_width()) // 2
+            y_pos = (STATUS_HEIGHT - surf.get_height()) // 2
+            self.screen.blit(surf, (x_pos, y_pos))
         else:
             symbol = "X" if current_player == PLAYER_X else "O"
             color = COLOR_X if current_player == PLAYER_X else COLOR_O
@@ -101,9 +90,9 @@ class PygameUI:
             # Render phần đầu với màu trắng, phần tên người chơi với màu riêng
             surf_pre  = self.font_status.render(prefix_text, True, COLOR_STATUS_TXT)
             surf_name = self.font_status.render(symbol, True, color)
-            # Tính vị trí căn giữa
+            # Tính vị trí căn giữa trên bảng cờ
             total_w = surf_pre.get_width() + surf_name.get_width()
-            x_start = (WINDOW_WIDTH - total_w) // 2
+            x_start = (board_area_width - total_w) // 2
             y_pos   = (STATUS_HEIGHT - surf_pre.get_height()) // 2
             self.screen.blit(surf_pre,  (x_start, y_pos))
             self.screen.blit(surf_name, (x_start + surf_pre.get_width(), y_pos))
@@ -132,6 +121,45 @@ class PygameUI:
                 CELL_SIZE, CELL_SIZE
             )
             pygame.draw.rect(self.screen, COLOR_HOVER, hover_rect)
+
+        # Vẽ highlight nước đi cuối cùng (Hiệu ứng nhấp nháy và góc ngắm)
+        if getattr(board, 'last_move', None) is not None:
+            last_row, last_col = board.last_move
+            
+            x = MARGIN + last_col * CELL_SIZE
+            y = STATUS_HEIGHT + MARGIN + last_row * CELL_SIZE
+            
+            last_rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
+            
+            # Tô nền nhẹ cho ô vừa đánh
+            pygame.draw.rect(self.screen, (255, 245, 200), last_rect)
+            
+            # Hiệu ứng viền nhấp nháy theo thời gian (pulsing)
+            time_ms = pygame.time.get_ticks()
+            pulse = (math.sin(time_ms / 150.0) + 1) / 2  # Dao động từ 0.0 đến 1.0
+            
+            # Màu cam đỏ nhấp nháy
+            color_pulse = (255, int(100 + 100 * pulse), 0)
+            
+            # Vẽ viền nhấp nháy mỏng
+            pygame.draw.rect(self.screen, color_pulse, last_rect, max(1, int(2 + 2 * pulse)))
+            
+            # Vẽ 4 góc ngắm (Targeting corners) bao quanh ô
+            c_len = CELL_SIZE // 4  # Chiều dài cạnh góc
+            c_thick = 3             # Độ dày
+            
+            # Top-Left
+            pygame.draw.line(self.screen, color_pulse, (x, y), (x + c_len, y), c_thick)
+            pygame.draw.line(self.screen, color_pulse, (x, y), (x, y + c_len), c_thick)
+            # Top-Right
+            pygame.draw.line(self.screen, color_pulse, (x + CELL_SIZE, y), (x + CELL_SIZE - c_len, y), c_thick)
+            pygame.draw.line(self.screen, color_pulse, (x + CELL_SIZE, y), (x + CELL_SIZE, y + c_len), c_thick)
+            # Bottom-Left
+            pygame.draw.line(self.screen, color_pulse, (x, y + CELL_SIZE), (x + c_len, y + CELL_SIZE), c_thick)
+            pygame.draw.line(self.screen, color_pulse, (x, y + CELL_SIZE), (x, y + CELL_SIZE - c_len), c_thick)
+            # Bottom-Right
+            pygame.draw.line(self.screen, color_pulse, (x + CELL_SIZE, y + CELL_SIZE), (x + CELL_SIZE - c_len, y + CELL_SIZE), c_thick)
+            pygame.draw.line(self.screen, color_pulse, (x + CELL_SIZE, y + CELL_SIZE), (x + CELL_SIZE, y + CELL_SIZE - c_len), c_thick)
 
         # Vẽ các đường kẻ lưới (ngang và dọc)
         for i in range(BOARD_SIZE + 1):
@@ -205,6 +233,90 @@ class PygameUI:
             STATUS_HEIGHT + MARGIN + r1 * CELL_SIZE + CELL_SIZE // 2
         )
         pygame.draw.line(self.screen, COLOR_WIN_LINE, start_pos, end_pos, 5)
+
+    def draw_game_over(self, winner, is_draw, game_mode, ai_player):
+        """
+        Vẽ màn hình tối mờ (overlay) và popup kết quả khi trận đấu kết thúc.
+        Giao diện đẹp mắt, không dùng ký hiệu đặc biệt gây lỗi font.
+        """
+        # Tạo lớp overlay đen mờ
+        overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 160))  # Đen với alpha 160
+        self.screen.blit(overlay, (0, 0))
+        
+        # Kích thước và vị trí bảng kết quả
+        panel_w, panel_h = 420, 220
+        panel_x = (WINDOW_WIDTH - panel_w) // 2
+        panel_y = (WINDOW_HEIGHT - panel_h) // 2
+        
+        # Vẽ nền bảng
+        panel_rect = pygame.Rect(panel_x, panel_y, panel_w, panel_h)
+        pygame.draw.rect(self.screen, (40, 44, 52), panel_rect, border_radius=15)
+        pygame.draw.rect(self.screen, (80, 85, 95), panel_rect, 3, border_radius=15)
+        
+        # Lấy thông tin text
+        if is_draw:
+            title = "HÒA NHAU!"
+            color = COLOR_WHITE
+            subtext = "Bàn cờ đã kín ô, không ai chiến thắng."
+        else:
+            symbol = "X" if winner == PLAYER_X else "O"
+            color = COLOR_X if winner == PLAYER_X else COLOR_O
+            if game_mode == MODE_PVE:
+                if winner == ai_player:
+                    title = "MÁY THẮNG!"
+                    subtext = f"AI ({symbol}) đã vượt qua bạn."
+                else:
+                    title = "BẠN THẮNG!"
+                    subtext = f"Tuyệt vời! Bạn ({symbol}) đã thắng AI."
+            else:
+                title = f"NGƯỜI CHƠI {symbol} THẮNG!"
+                subtext = "Chúc mừng người chiến thắng!"
+
+        # Khởi tạo font cục bộ cho bảng
+        font_large = pygame.font.SysFont("segoeui", 38, bold=True)
+        font_small = pygame.font.SysFont("segoeui", 20)
+        font_hint = pygame.font.SysFont("segoeui", 16, italic=True)
+        
+        surf_title = font_large.render(title, True, color)
+        surf_sub = font_small.render(subtext, True, COLOR_WHITE)
+        surf_hint = font_hint.render("Nhấn [Ván mới] hoặc phím R để chơi lại", True, (180, 180, 180))
+        
+        # Căn giữa text trong bảng
+        self.screen.blit(surf_title, (panel_x + (panel_w - surf_title.get_width()) // 2, panel_y + 35))
+        self.screen.blit(surf_sub, (panel_x + (panel_w - surf_sub.get_width()) // 2, panel_y + 100))
+        self.screen.blit(surf_hint, (panel_x + (panel_w - surf_hint.get_width()) // 2, panel_y + 165))
+
+    def draw_main_menu(self):
+        """Vẽ menu chính khi vừa khởi động game."""
+        self.screen.fill((30, 34, 42))  # Nền tối sang trọng
+        
+        # Tiêu đề game
+        font_title = pygame.font.SysFont("segoeui", 70, bold=True)
+        title_surf = font_title.render("GAME CARO AI", True, (255, 215, 0))  # Vàng Gold
+        title_x = (WINDOW_WIDTH - title_surf.get_width()) // 2
+        self.screen.blit(title_surf, (title_x, 150))
+        
+        # Nút Bắt đầu
+        btn_w, btn_h = 280, 70
+        btn_x = (WINDOW_WIDTH - btn_w) // 2
+        btn_y = 300
+        
+        self.rect_btn_start = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
+        is_hover = self.rect_btn_start.collidepoint(self.mouse_pos)
+        
+        color = COLOR_BTN_HOVER if is_hover else COLOR_BTN_BG
+        pygame.draw.rect(self.screen, color, self.rect_btn_start, border_radius=15)
+        pygame.draw.rect(self.screen, COLOR_GRID, self.rect_btn_start, 3, border_radius=15)
+        
+        font_btn = pygame.font.SysFont("segoeui", 28, bold=True)
+        text_surf = font_btn.render("BẮT ĐẦU CHƠI", True, COLOR_BTN_TEXT)
+        self.screen.blit(text_surf, (btn_x + (btn_w - text_surf.get_width()) // 2, btn_y + (btn_h - text_surf.get_height()) // 2))
+        
+        # Hướng dẫn nhỏ
+        font_hint = pygame.font.SysFont("segoeui", 18, italic=True)
+        hint_surf = font_hint.render("Có thể tùy chỉnh chế độ chơi và người đi trước sau khi vào game", True, (150, 160, 170))
+        self.screen.blit(hint_surf, ((WINDOW_WIDTH - hint_surf.get_width()) // 2, WINDOW_HEIGHT - 80))
 
     def update_hover(self, mouse_pos):
         """
