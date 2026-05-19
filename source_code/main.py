@@ -126,6 +126,17 @@ def main():
                 else:
                     current_player = human_player
 
+                if game_over:
+                    ui.draw_board(board)
+                    ui.draw_pieces(board)
+                    if winning_cells:
+                        ui.draw_winning_line(winning_cells)
+                    ui.draw_status_bar(current_player, game_over, winner, is_draw, game_mode, ai_player)
+                    ui.draw_panel(game_mode, player_first)
+                    ui.render()
+                    pygame.time.delay(1500)
+                    pygame.event.clear(pygame.MOUSEBUTTONDOWN)
+
         # ── 2b. XỬ LÝ SỰ KIỆN TỪ BÀN PHÍM/CHUỘT ─────────────────
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -189,6 +200,17 @@ def main():
                     ui.hover_cell = None
                 else:
                     current_player = ai_player if current_player == human_player else human_player
+
+                if game_over:
+                    ui.draw_board(board)
+                    ui.draw_pieces(board)
+                    if winning_cells:
+                        ui.draw_winning_line(winning_cells)
+                    ui.draw_status_bar(current_player, game_over, winner, is_draw, game_mode, ai_player)
+                    ui.draw_panel(game_mode, player_first)
+                    ui.render()
+                    pygame.time.delay(1500)
+                    pygame.event.clear(pygame.MOUSEBUTTONDOWN)
 
         # ── 2c. VẼ MÀN HÌNH ─────────────────────────────────
         ui.draw_board(board)
