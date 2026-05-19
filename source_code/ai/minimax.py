@@ -31,6 +31,39 @@ class MinimaxAgent:
         # Lấy các ô trống trong bán kính 2 để tập trung đánh xoay quanh các quân cờ
         empty_cells = board.get_empty_cells(radius=2)
         
+        # --- QUYẾT ĐỊNH NHANH: Kiểm tra thắng ngay lập tức và chặn nước thắng của đối thủ ---
+        # 1. Nếu Máy (MACHINE) có nước đi thắng ngay lập tức -> Đánh luôn để thắng, bỏ qua duyệt cây
+        for r, c in empty_cells:
+            board.make_move(r, c, self.MACHINE)
+            winner, _ = game_logic.check_winner(board)
+            board.undo_move(r, c)
+            if winner == self.MACHINE:
+                execution_time = time.time() - start_time
+                print(f"[Quyết định nhanh] THẮNG NGAY LẬP TỨC tại [{r}, {c}] | Thời gian: {execution_time:.4f}s")
+                return (r, c), 100000000
+
+        # 2. Nếu Người chơi (PLAYER) có nước thắng ở lượt tiếp theo -> Phải chặn ngay lập tức
+        blocking_moves = []
+        for r, c in empty_cells:
+            board.make_move(r, c, self.PLAYER)
+            winner, _ = game_logic.check_winner(board)
+            board.undo_move(r, c)
+            if winner == self.PLAYER:
+                blocking_moves.append((r, c))
+
+        if len(blocking_moves) == 1:
+            r, c = blocking_moves[0]
+            board.make_move(r, c, self.MACHINE)
+            score = self.evaluator.evaluate_board_global(board.grid)
+            board.undo_move(r, c)
+            execution_time = time.time() - start_time
+            print(f"[Quyết định nhanh] CHẶN NƯỚC THẮNG/BỐN của đối thủ tại [{r}, {c}] | Thời gian: {execution_time:.4f}s")
+            return (r, c), score
+        elif len(blocking_moves) > 1:
+            # Nếu đối thủ có nhiều hơn 1 nước thắng (thế đôi), ta bắt buộc phải chặn 1 trong số đó.
+            # Thu hẹp danh sách ứng viên chỉ gồm các ô chặn này để giảm thiểu nhánh duyệt của cây Minimax.
+            empty_cells = blocking_moves
+        
         # Sắp xếp các nước đi ứng viên ở gốc cây để tối ưu cắt tỉa và sửa lỗi Horizon Effect (chặn nước đi cùng điểm)
         scored_cells = []
         for r, c in empty_cells:
