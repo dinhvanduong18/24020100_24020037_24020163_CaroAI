@@ -31,8 +31,6 @@ class Evaluator:
                 return 20000
             elif machine_count == WIN_COUNT - 3:
                 return 100
-            elif machine_count == WIN_COUNT - 4:
-                return 10
                 
         # 3. Cửa sổ chỉ chứa quân của PLAYER (MIN) - Phòng thủ (Điểm trừ cực nặng)
         if player_count > 0:
@@ -46,8 +44,6 @@ class Evaluator:
                 return -300000
             elif player_count == WIN_COUNT - 3:
                 return -1000
-            elif player_count == WIN_COUNT - 4:
-                return -100
                 
         return 0
 

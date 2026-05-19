@@ -23,7 +23,7 @@ def main():
     evaluator  = Evaluator()   # Bộ đánh giá điểm số
 
     # Khởi tạo AI với độ sâu bằng 3
-    ai_agent   = MinimaxAgent(depth=3, evaluator=evaluator)
+    ai_agent   = MinimaxAgent(depth=3, evaluator=evaluator, use_pruning=True)
     clock      = pygame.time.Clock()
 
     # Trạng thái game ban đầu

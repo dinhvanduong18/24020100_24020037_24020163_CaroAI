@@ -144,9 +144,11 @@ class MinimaxAgent:
                 eval_score = self._minimax_rec(board, depth - 1, False, r, c, game_logic, alpha, beta)
                 board.undo_move(r, c)
                 max_eval = max(max_eval, eval_score)
-                alpha = max(alpha, eval_score)
-                if beta <= alpha:
-                    break
+                
+                if self.use_pruning:
+                    alpha = max(alpha, eval_score)
+                    if beta <= alpha:
+                        break
                 
             return max_eval
         else:
@@ -157,9 +159,11 @@ class MinimaxAgent:
                 eval_score = self._minimax_rec(board, depth - 1, True, r, c, game_logic, alpha, beta)
                 board.undo_move(r, c)
                 min_eval = min(min_eval, eval_score)
-                beta = min(beta, eval_score)
-                if beta <= alpha:
-                    break
+                
+                if self.use_pruning:
+                    beta = min(beta, eval_score)
+                    if beta <= alpha:
+                        break
                 
             return min_eval
 
