@@ -93,7 +93,6 @@ python main.py
 
 - **Chuột trái**: Đặt quân cờ vào ô được chọn
 - **Phím R**: Reset ván chơi mới (khởi động lại game)
-- **Phím ESC**: Thoát game
 - **Nút trên màn hình**:
   - **Chế độ (Mode)**: Chuyển đổi giữa PVE (chơi với AI) và PVP (chơi 2 người)
   - **Đi trước (First Move)**: Chọn người đi trước hoặc máy đi trước (chỉ trong chế độ PVE)
