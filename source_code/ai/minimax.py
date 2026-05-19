@@ -70,7 +70,8 @@ class MinimaxAgent:
         execution_time = time.time() - start_time
         
         # Bao cao ra terminal (su dung tieng Viet khong dau de tranh UnicodeEncodeError tren Windows Console mac dinh)
-        print(f"[Alpha-Beta] Do sau: {self.max_depth} | Trang thai da xet: {self.node_count} "
+        algo_name = "Alpha-Beta" if self.use_pruning else "Minimax thuan"
+        print(f"[{algo_name}] Do sau: {self.max_depth} | Trang thai da xet: {self.node_count} "
               f"| Thoi gian: {execution_time:.4f}s | Chon nuoc: {best_move} | Diem: {best_score}")
               
         return best_move, best_score
@@ -111,9 +112,10 @@ class MinimaxAgent:
                 eval_score = self._minimax_rec(board, depth - 1, False, r, c, game_logic, alpha, beta)
                 board.undo_move(r, c)
                 max_eval = max(max_eval, eval_score)
-                alpha = max(alpha, eval_score)
-                if beta <= alpha:
-                    break
+                if self.use_pruning:
+                    alpha = max(alpha, eval_score)
+                    if beta <= alpha:
+                        break
                 
             return max_eval
         else:
@@ -124,9 +126,10 @@ class MinimaxAgent:
                 eval_score = self._minimax_rec(board, depth - 1, True, r, c, game_logic, alpha, beta)
                 board.undo_move(r, c)
                 min_eval = min(min_eval, eval_score)
-                beta = min(beta, eval_score)
-                if beta <= alpha:
-                    break
+                if self.use_pruning:
+                    beta = min(beta, eval_score)
+                    if beta <= alpha:
+                        break
                 
             return min_eval
 

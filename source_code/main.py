@@ -22,8 +22,10 @@ def main():
     ui         = PygameUI()    # Giao diện pygame
     evaluator  = Evaluator()   # Bộ đánh giá điểm số
 
-    # Khởi tạo AI với độ sâu bằng 3
-    ai_agent   = MinimaxAgent(depth=3, evaluator=evaluator)
+    # Khởi tạo AI (Tạm thời tắt Alpha-Beta và giảm độ sâu để test)
+    # AI_DEPTH = 3 # Mặc định
+    AI_DEPTH = 2   # Dễ dàng thay đổi lại thành 3 tại đây
+    ai_agent   = MinimaxAgent(depth=AI_DEPTH, evaluator=evaluator, use_pruning=False)
     clock      = pygame.time.Clock()
 
     # Trạng thái game ban đầu
